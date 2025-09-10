@@ -1,0 +1,52 @@
+// ============================================================================
+// SENTINEL-2 MEDIAN COMPOSITE EXPORT
+// ============================================================================
+// Author: Muhammad Lukman Yazid (Luk)
+// Thesis: Timber Volume Estimation Using Harvester Data and Multisource Remote 
+//          Sensing: Integrating Airborne Laser Scanning, Sentinel Imagery, 
+//         Topographic, and Stand Data
+// ============================================================================
+
+// 1. DEFINE STUDY AREA =======================================================
+var studyArea = ee.FeatureCollection("projects/ee-luk/assets/rec1");
+
+// 2. DEFINE TIME RANGE =======================================================
+
+var startYear = 2018;
+var endYear   = 2018;
+
+// 3. LOAD SENTINEL-2 SR DATA ================================================
+
+var s2 = ee.ImageCollection('COPERNICUS/S2_SR')
+  .filterBounds(studyArea)
+  .filterDate(startYear + '-01-01', endYear + '-12-31')
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20)) // filter cloudy images
+  .select([
+    'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7',
+    'B8', 'B8A', 'B9', 'B11', 'B12'  // Exclude QA bands
+  ]);
+
+// 4. CREATE MEDIAN COMPOSITE ================================================
+
+var medianComposite = s2.median().clip(studyArea);
+
+// 5. VISUALIZATION ===========================================================
+
+Map.centerObject(studyArea, 9);
+Map.addLayer(medianComposite, {
+  bands: ['B4', 'B3', 'B2'],  // RGB
+  min: 0,
+  max: 3000,
+}, 'Median Composite (RGB)');
+
+// 6. EXPORT TO GOOGLE DRIVE ==================================================
+
+Export.image.toDrive({
+  image: medianComposite,
+  description: 'Sentinel2_Median_Composite_2018',
+  folder: 'GEE_Exports',
+  fileNamePrefix: 'S2_Median_2018',
+  region: studyArea,
+  scale: 10,
+  maxPixels: 1e13
+});

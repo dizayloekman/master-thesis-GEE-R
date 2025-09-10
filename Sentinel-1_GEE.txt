@@ -1,0 +1,66 @@
+// ============================================================================
+// SENTINEL-1 SAR VARIABLE EXPORT
+// ============================================================================
+// Author: Muhammad Lukman Yazid (Luk)
+// Thesis: Timber Volume Estimation Using Harvester Data and Multisource Remote 
+//          Sensing: Integrating Airborne Laser Scanning, Sentinel Imagery, 
+//         Topographic, and Stand Data
+// ============================================================================
+
+// 1. DEFINE AREA OF INTEREST =================================================
+
+var aoi = ee.Geometry.Rectangle([61.1, 9.2, 60.6, 12.5]); 
+
+// Or use a FeatureCollection asset
+var aoi = ee.FeatureCollection("projects/ee-lukmanyazid43/assets/las_outer_polygon_NW_33N");
+
+// 2. FILTER SENTINEL-1 IMAGE COLLECTION ====================================
+
+var s1 = ee.ImageCollection('COPERNICUS/S1_GRD')
+  .filterBounds(aoi)
+  .filterDate('2018-01-01', '2018-12-01')
+  .filter(ee.Filter.eq('instrumentMode', 'IW'))  // Interferometric Wide swath
+  .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+  .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+  .select(['VV', 'VH']);  // Only select VV and VH bands
+
+// 3. CREATE MEDIAN COMPOSITES ===============================================
+
+var vv_median = s1.select('VV').median();
+var vh_median = s1.select('VH').median();
+
+// 4. DERIVED METRICS ========================================================
+
+// VV/VH ratio
+var ratio = vv_median.divide(vh_median).rename('VV_VH_ratio');
+
+// VV - VH difference
+var diff = vv_median.subtract(vh_median).rename('VV_minus_VH');
+
+// Normalized difference: (VV - VH) / (VV + VH)
+var norm_diff = vv_median.subtract(vh_median)
+  .divide(vv_median.add(vh_median))
+  .rename('VV_VH_norm_diff');
+
+// 5. COMBINE ALL BANDS ======================================================
+
+var metrics = vv_median.rename('VV')
+  .addBands(vh_median.rename('VH'))
+  .addBands(ratio)
+  .addBands(diff)
+  .addBands(norm_diff);
+
+// 6. EXPORT TO GOOGLE DRIVE ================================================
+
+Export.image.toDrive({
+  image: metrics.clip(aoi),
+  description: 'Sentinel1_Variables_2018',
+  scale: 10,               // Sentinel-1 resolution (meters)
+  region: aoi,
+  maxPixels: 1e10
+});
+
+// 7. VISUALIZATION ==========================================================
+
+Map.centerObject(aoi);
+Map.addLayer(metrics, {bands: ['VV', 'VH'], min: -20, max: 0}, 'VV & VH Composite');
