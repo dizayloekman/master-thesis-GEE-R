@@ -5,6 +5,7 @@
 // Thesis: Timber Volume Estimation Using Harvester Data and Multisource Remote 
 //          Sensing: Integrating Airborne Laser Scanning, Sentinel Imagery, 
 //         Topographic, and Stand Data
+// GEE code link: https://code.earthengine.google.com/d353a35bcdd7b4dcd9d7edc747931a06?noload=true
 // ============================================================================
 
 // 1. DEFINE STUDY AREA =======================================================
@@ -50,3 +51,4 @@ Export.image.toDrive({
   scale: 10,
   maxPixels: 1e13
 });
+
