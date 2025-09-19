@@ -5,6 +5,7 @@
 // Thesis: Timber Volume Estimation Using Harvester Data and Multisource Remote 
 //          Sensing: Integrating Airborne Laser Scanning, Sentinel Imagery, 
 //         Topographic, and Stand Data
+// GEE code link: https://code.earthengine.google.com/523a7b635cf5560ffafba37d149aea23?noload=true
 // ============================================================================
 
 // 1. DEFINE AREA OF INTEREST =================================================
@@ -64,3 +65,4 @@ Export.image.toDrive({
 
 Map.centerObject(aoi);
 Map.addLayer(metrics, {bands: ['VV', 'VH'], min: -20, max: 0}, 'VV & VH Composite');
+
